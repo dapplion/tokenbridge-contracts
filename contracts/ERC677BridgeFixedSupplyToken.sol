@@ -1,7 +1,5 @@
 pragma solidity 0.4.24;
 
-import "openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 import "openzeppelin-solidity/contracts/AddressUtils.sol";
 import "./interfaces/IBurnableMintableERC677Token.sol";
@@ -11,7 +9,7 @@ import "./upgradeable_contracts/Claimable.sol";
 * @title ERC677BridgeToken
 * @dev The basic implementation of a bridgeable ERC677-compatible token
 */
-contract ERC677BridgeToken is IBurnableMintableERC677Token, DetailedERC20, BurnableToken, MintableToken, Claimable {
+contract ERC677BridgeFixedSupplyToken is IBurnableMintableERC677Token, DetailedERC20, Claimable {
     bytes4 internal constant ON_TOKEN_TRANSFER = 0xa4c0ed36; // onTokenTransfer(address,uint256,bytes)
 
     address internal bridgeContractAddr;
@@ -94,10 +92,6 @@ contract ERC677BridgeToken is IBurnableMintableERC677Token, DetailedERC20, Burna
         return _to.call(abi.encodeWithSelector(ON_TOKEN_TRANSFER, _from, _value, _data));
     }
 
-    function finishMinting() public returns (bool) {
-        revert();
-    }
-
     function renounceOwnership() public onlyOwner {
         revert();
     }
@@ -117,6 +111,24 @@ contract ERC677BridgeToken is IBurnableMintableERC677Token, DetailedERC20, Burna
 
     function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
         return super.decreaseApproval(spender, subtractedValue);
+    }
+
+    /**
+     * @dev No-op burn function, caller keeps the tokens
+     * @param _value
+     */
+    function burn(uint256 _value) public {
+        // no-op
+    }
+
+    /**
+     * @dev Pass-through function to transfer
+     * @param _to The address that will receive the tokens.
+     * @param _amount The amount of tokens to transfer.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint256 _amount) public returns (bool) {
+        return transfer(_to, _amount);
     }
 }
 
